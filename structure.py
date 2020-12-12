@@ -27,8 +27,8 @@ def domain_of(relation):
 
 class Structure:
     def __init__(self, domain, relations):
-        self.domain = frozenset(domain)
-        self.relations = tuple(frozenset(relation) for relation in relations)
+        self.domain = tuple(domain)
+        self.relations = tuple(tuple(relation) for relation in relations)
 
     @cached_property
     def type(self):

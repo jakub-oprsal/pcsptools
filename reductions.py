@@ -1,6 +1,5 @@
-from itertools import combinations
-
-# A REDUCTION
+##
+# REDUCTIONS
 #
 # inputs (in_instance)
 # returns (out_instance, out_decode)
@@ -8,40 +7,51 @@ from itertools import combinations
 # where *out_instance* is a P2 instance, and *decode* a function that decodes
 # *out_solution* to *in_solution*
 
+from itertools import combinations
+from structure import transpose
+
 
 def csp_to_lc(in_instance):
     """ converts a CSP instance fiven as (Input, Template) to a LC instance
         returns a pair (variables, constraints) and a decode function
-        output constraints are iterator
-    """
+        output constraints are iterator """
     Input, Template = in_instance
 
-    csp_variables = tuple((v, Template.domain) for v in Input.domain)
+    inverse = {a: i for i, a in enumerate(Template.domain)}
+    dom_size = len(Template.domain)
+    rel_sizes = tuple(len(rel) for rel in Template.relations)
+
+    csp_variables = tuple((v, dom_size) for v in Input.domain)
     csp_constraints = tuple(
-        (c, rel_T)
-        for rel_I, rel_T in zip(Input.relations, Template.relations)
-        for c in rel_I)
+        (c, size)
+        for rel, size in zip(Input.relations, rel_sizes)
+        for c in rel)
     variables = csp_variables + csp_constraints
 
+    def projections(relation):
+        return transpose(
+            tuple((i, inverse[a]) for a in edge)
+            for i, edge in enumerate(relation))
+
     def constraints():
-        for vs, relation in csp_constraints:
-            for i in range(len(vs)):
-                yield ((vs, vs[i]),
-                    tuple(map(lambda edge: (edge, edge[i]), relation)))
+        for in_rel, rel in zip(Input.relations, Template.relations):
+            projs = projections(rel)
+            for vs in in_rel:
+                for v, pi in zip(vs, projs):
+                    yield ((vs, v), pi)
 
     def decode(solution):
-        return {v: solution[v] for v, dom in csp_variables}
+        return {v: Template.domain[solution[v]] for v, dom in csp_variables}
 
     return ((variables, constraints()), decode)
 
 
 def lc_to_sat(in_instance):
     """ converts a LC instance to a list of SAT clauses
-        returns an iterator and a decode function
-    """
+        returns an iterator and a decode function """
     lc_vars, lc_constraints = in_instance
 
-    variables = (-1,) + tuple((v, a) for v, domain in lc_vars for a in domain)
+    variables = (-1,) + tuple((v, a) for v, d in lc_vars for a in range(d))
     table = {va: i for i, va in enumerate(variables) if i > 0}
 
     def exactly_one(pairs):
@@ -51,20 +61,15 @@ def lc_to_sat(in_instance):
             yield (-a, -b)
 
     def dnfs():
-        for v, domain in lc_vars:
-            yield from exactly_one((v, a) for a in domain)
+        for v, d in lc_vars:
+            yield from exactly_one((v, a) for a in range(d))
         for pair, pi in lc_constraints:
             vs, v = pair
             for x, pix in pi:
                 yield (-table[(vs, x)], table[(v, pix)])
 
     def decode(solution):
-        lc_solution = dict()
-        for x in solution:
-            if x > 0:
-                v, value = variables[x]
-                lc_solution[v] = value
-        return lc_solution
+        return dict(variables[x] for x in solution if x > 0)
 
     return (dnfs(), decode)
 

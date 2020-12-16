@@ -1,35 +1,46 @@
 from structure import *
 from reductions import *
-from functools import cache
+from identities import *
+from math import factorial
 import pycosat
 
 
-@cache
-def fac(n):
-    return 1 if n <= 0 else fac(n-1)*n
-
-
-def neq(n):
-    return ((i, j) for i in range(n) for j in range(n) if i != j)
-
+solver = csp_solver(pycosat.itersolve)
 
 n = 3
-clique = Structure(range(n), (neq(n),))
-assert(domain_of(neq(n)) == set(range(n)))
-assert(len(clique.relations[0]) == n*(n-1))
-assert(clique.type == (2,))
+nclique = clique(n)
+assert(domain_of(nclique.relations[0]) == set(range(n)))
+assert(len(nclique.relations[0]) == n*(n-1))
+assert(nclique.type == (2,))
 
 k = 3
-powr = power_structure(clique, k)
+powr = nclique.power(k)
 assert(set(powr.domain) == set(domain_of(powr.relations[0])))
 assert(len(powr.relations[0]) == (n*(n-1))**k)
 assert(powr.type == (2,))
 
-bigger_clique = Structure(range(n+1), (neq(n+1),))
-sat_instance, decode = csp_to_sat((bigger_clique, clique))
-solution = pycosat.solve(sat_instance)
-assert(solution == "UNSAT")
+prod = product_structure(clique(3), clique(4))
+assert(set(prod.domain) == set(domain_of(prod.relations[0])))
+assert(len(prod.relations[0]) == 6*12)
+assert(prod.type == (2,))
 
-sat_instance, decode = csp_to_sat((powr, clique))
-solutions = tuple(map(decode, pycosat.itersolve(sat_instance)))
-assert(len(solutions) == k*fac(n))
+solutions = tuple(solver(clique(n+1), nclique))
+assert(len(solutions) == 0)
+
+solutions = tuple(solver(powr, nclique))
+assert(len(solutions) == k*factorial(n))
+
+try:
+    solution = next(test_identities(
+        cycle(5), clique(4), parse_identities("c(xyz) = c(yzx)"), solver))
+    assert(False)
+except StopIteration:
+    assert(True)
+
+solver = csp_solver(pycosat.itersolve)
+try:
+    solution = next(test_identities(
+        cycle(9), clique(3), parse_identities("c(xyz) = c(yzx)"), solver))
+    assert(True)
+except StopIteration:
+    assert(False)

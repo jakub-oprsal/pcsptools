@@ -84,4 +84,12 @@ def compose(reduction1, reduction2):
     return composed_reduction
 
 
-csp_to_sat = compose(csp_to_lc, lc_to_sat)
+def csp_solver(sat_solver):
+    def solver(*csp_instance):
+        lc_instance, decode_lc = csp_to_lc(csp_instance)
+        sat_instance, decode_sat = lc_to_sat(lc_instance)
+        def decode(x): return decode_lc(decode_sat(x))
+        yield from map(decode, sat_solver(sat_instance))
+
+    return solver
+

@@ -1,6 +1,20 @@
+##
+# IDENTITIES
+#
+# Tools to check height 1 identities in polymorphism minions
+#
+# The key construction ere is the *indicator structure* which creates the
+# instance of CSP whose solutions correspond to the solutions of the given
+# identities.
+#
+# In addition, we have two helper tools: `Components` (which solves equality
+# CSP) and `parse_identities` which converts simply written identities into an
+# instance of label cover.
+#
 from itertools import product
 from structure import *
 import string
+
 
 class Components:
     """ a data structure holding connected components of a graph """
@@ -8,27 +22,71 @@ class Components:
     def __init__(self, domain):
         self.tree = {a: a for a in domain}
 
-    def __call__(self, a, same_as=None):
+    def __call__(self, a):
         """ returns the current representative from the same class as `a`
             same_as is used for bookeeping """
-        if same_as is None:
-            same_as = []
-        if self.tree[a] == a:
-            for e in same_as:
-                self.tree[e] = a
-            return a
-        same_as.append(a)
-        return self(self.tree[a], same_as)
+        cur, same_as = a, ()
+        while self.tree[cur] != cur:
+            cur, same_as = self.tree[cur], same_as + (cur,)
+        for e in same_as:
+            self.tree[e] = cur
+        return cur
+
+    @property
+    def domain(self):
+        return iter(self.tree)
 
     def add(self, a, b):
         """ add an edge to the graph possibly collapsing two components"""
         self.tree[self(a)] = self(b)
 
+    def items(self):
+        """ iterates through pairs (a, representive of a/~) """
+        return ((a, self(a)) for a in self.domain)
+
     def __iter__(self):
         """ iterates through representatives of the classes """
-        for a in self.tree:
-            if self.tree[a] == a:
-                yield a
+        return (a for a in self.tree if self.tree[a] == a)
+
+
+def cover(domain, edges):
+    """ Yields from a subset of vertices so that each other vertex is reachable from
+        this set.
+        This is based on Kosaraju's algorithm for strongly connected components."""
+
+    neighbours = {v: [] for v in domain}
+    for u, v in edges:
+        neighbours[u].append(v)
+
+    def build_stack(v):
+        if v not in to_visit:
+            return
+        to_visit.discard(v)
+        for u in neighbours[v]:
+            build_stack(u)
+        stack.append(v)
+        return
+
+    to_visit, stack = set(domain), list()
+    for v in domain:
+        build_stack(v)
+
+    def remove_reachable(v):
+        for u in neighbours[v]: 
+            try:
+                stack.remove(u)
+                remove_reachable(u)
+            except ValueError:
+                pass
+        return
+
+    while True:
+        try:
+            v = stack.pop()
+            yield v
+            remove_reachable(v)
+        except IndexError:
+            return
 
 
 def indicator_structure(Template, LC_instance):
@@ -37,12 +95,11 @@ def indicator_structure(Template, LC_instance):
         and passes the identification object """
     in_vars, in_cons = LC_instance
 
+    # Construct the domain of the indicator by factoring
     arities = dict(in_vars)
-    domain = set()
-    for f, arity in arities.items():
-        for x in product(Template.domain, repeat=arity):
-            domain.add((f, x))
-
+    domain = ((f, x)
+        for f, arity in arities.items()
+        for x in product(Template.domain, repeat=arity))
     identify = Components(domain)
     for scope, relation in in_cons:
         f, g = scope
@@ -51,14 +108,18 @@ def indicator_structure(Template, LC_instance):
             x_pi = tuple(x[pi[i]] for i in range(arities[f]))
             identify.add((f, x_pi), (g, x))
 
-    def constraint_from_rel(relation):
-        for f in arities:
-            for xs in product_relation(relation, repeat=arities[f]):
-                yield tuple(identify((f, x)) for x in xs)
-
-    constraints = (
-        constraint_from_rel(relation) for relation in Template.relations)
     variables = iter(identify)
+
+    # impose constraints that cover all thats necessary
+    important_fs = tuple(cover(arities, (scope for scope, rel in in_cons)))
+
+    def indicator_relation(template_relation):
+        return set(
+            tuple(identify((f, x)) for x in xs)
+            for f in important_fs
+            for xs in product_relation(template_relation, repeat=arities[f]))
+
+    rels = (indicator_relation(relation) for relation in Template.relations)
 
     def decode(homomorphism):
         polymorphisms = dict()
@@ -68,7 +129,7 @@ def indicator_structure(Template, LC_instance):
                 for x in product(Template.domain, repeat=arity)}
         return polymorphisms
 
-    return Structure(*constraints, domain=variables), decode
+    return Structure(variables, *rels), decode
 
 
 def test_identities(A, B, identities, solver):
@@ -82,10 +143,9 @@ def parse_identities(*args):
         'm(x, x, y) = m(x, y, x) = m(y, x, x)', or
         '   s(123,123)=s(231,321) """
     fs, constraints = dict(), list()
-    
+
     for id_no, line in enumerate(args):
         terms, xs = [], set()
-
         state, fargs = 1, ""
         for i, char in enumerate(line):
             if state == 0:
@@ -94,7 +154,8 @@ def parse_identities(*args):
                 if char == '=':
                     state = 1
                 else:
-                    raise SyntaxError(f"{id_no}:{i}.")
+                    raise SyntaxError(
+                        f"Unexpected character '{char}' at {id_no}:{i}.")
             elif state == 1:
                 if char in " ":
                     continue
@@ -102,7 +163,8 @@ def parse_identities(*args):
                     f = char
                     state = 2
                 else:
-                    raise SyntaxError(f"{id_no}:{i}.")
+                    raise SyntaxError(
+                        f"Unexpected character '{char}' at {id_no}:{i}.")
             elif state == 2:
                 if char == ' ':
                     continue
@@ -116,7 +178,8 @@ def parse_identities(*args):
                     xs.add(char)
                 elif char == ")":
                     if len(fargs) == 0:
-                        raise SyntaxError(f"{id_no}:{i}.")
+                        raise SyntaxError(
+                            f"Unexpected character '{char}' at {id_no}:{i}.")
                     if f in fs and fs[f] != len(fargs):
                         raise SyntaxError(
                             f"'{f}' has ambiguous arity.")
@@ -126,9 +189,10 @@ def parse_identities(*args):
                     fargs = ""
                     state = 0
                 else:
-                    raise SyntaxError(f"{id_no}:{i}.")
+                    raise SyntaxError(
+                        f"Unexpected character '{char}' at {id_no}:{i}.")
         if state != 0 or len(terms) == 1:
-            raise SyntaxError
+            raise SyntaxError('Unexpected end of input.')
 
         fs[f'i{id_no}'] = len(xs)
         x_to_i = {x: i for i, x in enumerate(xs)}

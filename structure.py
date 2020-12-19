@@ -1,4 +1,4 @@
-import itertools
+from itertools import product, starmap, chain
 from functools import cached_property
 
 
@@ -14,7 +14,7 @@ def arity_of(relation):
         return None
 
     if not all(arity == len(edge) for edge in rel):
-        raise IndexError
+        raise ValueError('Ambiguous arity!')
     return arity
 
 
@@ -26,16 +26,28 @@ def domain_of(relation):
 
 
 class Structure:
-    def __init__(self, *relations, domain=None):
+    def __init__(self, domain, *relations):
+        self.domain = tuple(domain)
         self.relations = tuple(tuple(relation) for relation in relations)
-        if domain is not None:
-            self.domain = tuple(domain)
-        else:
-            self.domain = tuple(set().union(*map(domain_of, self.relations)))
 
     @cached_property
     def type(self):
         return tuple(map(arity_of, self.relations))
+
+    def check(self):
+        type_ = type(self)
+        for relation in self.relations:
+            if not domain_of(relation).issubset(self.domain):
+                raise ValueError('Relation defined on a bigger domain.')
+        return True
+
+    def is_similar(self, other):
+        if len(self.type) != len(other.type):
+            return False # Different number of relations
+        for n, m in zip(self.type, other.type):
+            if n != m and (None not in (n, m)):
+                return False # Arities do not match
+        return True
 
     def power(self, exponent):
         return product_structure(self, repeat=exponent)
@@ -43,52 +55,82 @@ class Structure:
     def product(self, other):
         return product_structure(self, other)
 
+    def singleton_expansion(self):
+        """ Adds singletons so that the resulting structure has a single
+            automorphism. """
+        return Structure(
+            self.domain,
+            *self.relations, *(((a,),) for a in self.domain))
 
-def product_relation(*args, repeat=1):
-    yield from map(transpose, itertools.product(*args, repeat=repeat))
+
+def product_relation(*args, **cwargs):
+    yield from map(transpose, product(*args, **cwargs))
 
 
-def product_structure(*args, repeat=1):
+def product_structure(*args, **cwargs):
     return Structure(
-        *itertools.starmap(
-            lambda *rels: product_relation(*rels, repeat=repeat),
-            transpose(struc.relations for struc in args)),
-        domain=itertools.product(*(struc.domain for struc in args), repeat=repeat))
+        product(*(struc.domain for struc in args), **cwargs),
+        *starmap(
+            lambda *rels: product_relation(*rels, **cwargs),
+            transpose(struc.relations for struc in args)))
 
 
-# STRUCTURE 'CONSTANTS'
-
+##
+# Pre-defined structures
+#
 def clique(k):
+    """ The k-clique graph. """
     return Structure(
-        ((i, j) for i in range(k) for j in range(k) if i != j),
-        domain=range(k))
+        range(k),
+        ((i, j) for i in range(k) for j in range(k) if i != j))
 
 
 def cycle(n):
+    """ The n-cycle graph. """
     if n==1:
         return loop(2)
     if n==2:
         return clique(2)
     def edges():
-        for a in itertools.chain(range(0, n, 2), range(1, n, 2)):
+        for a in chain(range(0, n, 2), range(1, n, 2)):
             yield (a, (a-1) % n)
             yield (a, (a+1) % n)
-    return Structure(edges(), domain=range(n))
+    return Structure(range(n), edges())
 
 
 def nae(n, arity=3):
+    """ NAE on an `n`-element set,
+        optinally the arity of the relation is given. """
     return Structure(
-        (x for x in product(range(n), repeat=arity) if len(set(x)) > 1),
-        domain=range(n))
+        range(n),
+        (x for x in product(range(n), repeat=arity) if len(set(x)) > 1))
 
 
 def onein(n):
+    """ The generalisation of 1in3-SAT to `n`-ary relations.
+        The domain is Boolean anyway. """
     return Structure(
-        (tuple((1 if i == k else 0) for i in range(n)) for k in range(n)),
-        domain=(0, 1))
+        (0, 1),
+        (tuple((1 if i == k else 0) for i in range(n)) for k in range(n)))
 
 
 def loop(*reltype, name=0):
+    """ The one-element loop structure with the given type
+        (all relations are non-empty). Type has to be fully defined. """
     return Structure(
-        *((tuple(name for i in range(arity)),) for arity in reltype),
-        domain=(name,))
+        (name,),
+        *((tuple(name for i in range(arity)),) for arity in reltype))
+
+def affine(p, arity=3):
+    """ Affine equations over Z_p. """
+    relations = tuple([] for i in range(p))
+    for xs in product(range(p), repeat=arity):
+        relations[sum(xs) % p].append(xs)
+    return Structure(range(p), *relations)
+
+def hornsat():
+    relations = (
+        (xs for xs in product((0, 1), repeat = 3) if xs != (0, 0, 1)),
+        (xs for xs in product((0, 1), repeat = 3) if xs != (0, 0, 0)),
+        ((0,),), ((1,),))
+    return Structure((0, 1), *relations)

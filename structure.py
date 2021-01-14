@@ -11,7 +11,7 @@ def arity_of(relation):
     try:
         arity = len(next(rel))
     except StopIteration:
-        return None
+        return None #Empty Relation
 
     if not all(arity == len(edge) for edge in rel):
         raise ValueError('Ambiguous arity!')
@@ -19,10 +19,7 @@ def arity_of(relation):
 
 
 def domain_of(relation):
-    domain = set()
-    for edge in relation:
-        domain = domain.union(edge)
-    return domain
+    return set().union(*relation)
 
 
 class Structure:
@@ -35,7 +32,7 @@ class Structure:
         return tuple(map(arity_of, self.relations))
 
     def check(self):
-        type_ = type(self)
+        type_ = type(self)  # Checks that arities are well-defined
         for relation in self.relations:
             if not domain_of(relation).issubset(self.domain):
                 raise ValueError('Relation defined on a bigger domain.')
@@ -43,10 +40,10 @@ class Structure:
 
     def is_similar(self, other):
         if len(self.type) != len(other.type):
-            return False # Different number of relations
+            return False        # Different number of relations
         for n, m in zip(self.type, other.type):
             if n != m and (None not in (n, m)):
-                return False # Arities do not match
+                return False    # Arities do not match
         return True
 
     def power(self, exponent):

@@ -21,6 +21,22 @@ from itertools import combinations
 from structure import transpose
 
 
+class InstanceMonad():
+    def __init__(self, instance, decode=lambda x: x):
+        """either pure or identity"""
+        self.instance = instance
+        self.decode = decode
+
+    def bind(self, reduction):
+        out = reduction(self.instance)
+        return InstanceMonad(
+            out.instance,
+            lambda x: self.decode(out.decode(x)))
+
+    def solve(self, solver):
+        yield from map(self.decode, solver(self.instance))
+
+
 def csp_to_lc(in_instance):
     """ converts a CSP instance fiven as (Input, Template) to an LC instance
         returns: LC instance (variables, constraints), and a decode function.
@@ -53,7 +69,7 @@ def csp_to_lc(in_instance):
     def decode(solution):
         return {v: Template.domain[solution[v]] for v, dom in csp_variables}
 
-    return (variables, constraints()), decode
+    return InstanceMonad((variables, constraints()), decode)
 
 
 def lc_to_sat(in_instance):
@@ -81,23 +97,10 @@ def lc_to_sat(in_instance):
     def decode(solution):
         return dict(variables[x] for x in solution if x > 0)
 
-    return dnfs(), decode
-
-
-def compose(reduction1, reduction2):
-    def composed_reduction(instance):
-        instance1, decode1 = reduction1(instance)
-        instance2, decode2 = reduction2(instance1)
-        return (instance2, lambda solution2: decode1(decode2(solution2)))
-
-    return composed_reduction
+    return InstanceMonad(dnfs(), decode)
 
 
 def csp_solver(sat_solver):
     def solver(*csp_instance):
-        lc_instance, decode_lc = csp_to_lc(csp_instance)
-        sat_instance, decode_sat = lc_to_sat(lc_instance)
-        yield from map(
-            lambda solution: decode_lc(decode_sat(solution)),
-            sat_solver(sat_instance))
+        yield from csp_to_lc(csp_instance).bind(lc_to_sat).solve(sat_solver)
     return solver

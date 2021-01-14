@@ -13,6 +13,7 @@
 #
 from itertools import product
 from structure import *
+from reductions import InstanceMonad
 import string
 
 
@@ -23,8 +24,7 @@ class Components:
         self.tree = {a: a for a in domain}
 
     def __call__(self, a):
-        """ returns the current representative from the same class as `a`
-            same_as is used for bookeeping """
+        """ returns the current representative from the same class as `a` """
         cur, same_as = a, ()
         while self.tree[cur] != cur:
             cur, same_as = self.tree[cur], same_as + (cur,)
@@ -50,34 +50,34 @@ class Components:
 
 
 def cover(domain, edges):
-    """ Yields from a subset of vertices so that each other vertex is reachable from
-        this set.
-        This is based on Kosaraju's algorithm for strongly connected components."""
+    """ Yields from a subset of vertices so that each other vertex is reachable
+        from this set.  This is based on Kosaraju's algorithm for strongly
+        connected components."""
 
     neighbours = {v: [] for v in domain}
     for u, v in edges:
         neighbours[u].append(v)
 
+    to_visit, stack = set(domain), list()
+
     def build_stack(v):
         if v not in to_visit:
             return
-        to_visit.discard(v)
+        to_visit.remove(v)
+
         for u in neighbours[v]:
             build_stack(u)
         stack.append(v)
         return
 
-    to_visit, stack = set(domain), list()
     for v in domain:
         build_stack(v)
 
     def remove_reachable(v):
         for u in neighbours[v]: 
-            try:
+            if u in stack:
                 stack.remove(u)
                 remove_reachable(u)
-            except ValueError:
-                pass
         return
 
     while True:
@@ -129,12 +129,13 @@ def indicator_structure(Template, LC_instance):
                 for x in product(Template.domain, repeat=arity)}
         return polymorphisms
 
-    return Structure(variables, *rels), decode
+    return InstanceMonad(Structure(variables, *rels), decode)
 
 
 def test_identities(A, B, identities, solver):
-    indicatorA, decode = indicator_structure(A, identities)
-    yield from map(decode, solver(indicatorA, B))
+    def Bsolver(instance):
+        yield from solver(instance, B)
+    yield from indicator_structure(A, identities).solve(Bsolver)
 
 
 def parse_identities(*args):

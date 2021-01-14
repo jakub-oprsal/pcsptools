@@ -42,6 +42,7 @@ except StopIteration:
 try:
     solution = next(test_identities(
         onein(3), nae(2), parse_identities("p(xxy) = p(yxx) = p(yxy) = p(yyy)"), solver))
+    print(solution)
 except StopIteration:
     assert(False)
 

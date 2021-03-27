@@ -1,35 +1,38 @@
 ##
 # REDUCTIONS
 #
-# Tools to provide reductions between CSP, label cover, and SAT. The goal is to
-# allow encoding of a CSP instance into a SAT instance, so that we can use
-# external SAT-solvers to solve CSP instances.
+# Tools to provide reductions between CSP, label cover, and SAT.  One of the
+# goals is to allow encoding of a CSP instance into a SAT instance, so that we
+# can use external SAT-solvers to solve CSP instances. But these reducitons can
+# be used for things like: checking whether a minor condition is satisfied by
+# polymorphisms, whether it is trivial, constructing reductions between CSPs,
+# etc.
 #
-# A reduction is a function that:
-# - inputs (in_instance)
-# - returns (out_instance, out_decode)
-#
-# where `decode` a function that decodes a solution to `out_instance` to a
-# solution of `in_instance` (this gives that the reduction is sound), and of
-# course, if `out_instance` is not solvable, then `in_instance` is not solvable
-# either (the reduction is complete).
+# For us a reduction is a function that inputs an instance of one problem, and
+# ouputs an instance of another problem and a way to decode a solution to the
+# second instance into a solution of the first instance. The output is encoded
+# in a monad which is an abstraction that will allow us easily compose
+# reductions by using `bind`.
 #
 # We also provide a helper function `csp_solver(sat_solver)` which produces a
 # csp_solver from a sat_solver.
 #
 from itertools import combinations
-from structure import transpose
+from .structure import transpose
 
 
-class InstanceMonad():
+class DelayDecode():
+    """ A monad for delayed computation. We use it to delay decoding a solution
+        after reducing to another problem. """
+
     def __init__(self, instance, decode=lambda x: x):
-        """either pure or identity"""
+        """ pure or identity, depending on arguments """
         self.instance = instance
         self.decode = decode
 
     def bind(self, reduction):
         out = reduction(self.instance)
-        return InstanceMonad(
+        return DelayDecode(
             out.instance,
             lambda x: self.decode(out.decode(x)))
 
@@ -69,7 +72,7 @@ def csp_to_lc(in_instance):
     def decode(solution):
         return {v: Template.domain[solution[v]] for v, dom in csp_variables}
 
-    return InstanceMonad((variables, constraints()), decode)
+    return DelayDecode((variables, constraints()), decode)
 
 
 def lc_to_sat(in_instance):
@@ -77,7 +80,7 @@ def lc_to_sat(in_instance):
         returns an iterator over clauses and a decode function """
     lc_vars, lc_constraints = in_instance
 
-    variables = (-1,) + tuple((v, a) for v, d in lc_vars for a in range(d))
+    variables = (False,) + tuple((v, a) for v, d in lc_vars for a in range(d))
     table = {va: i for i, va in enumerate(variables) if i > 0}
 
     def exactly_one(pairs):
@@ -97,7 +100,7 @@ def lc_to_sat(in_instance):
     def decode(solution):
         return dict(variables[x] for x in solution if x > 0)
 
-    return InstanceMonad(dnfs(), decode)
+    return DelayDecode(dnfs(), decode)
 
 
 def csp_solver(sat_solver):

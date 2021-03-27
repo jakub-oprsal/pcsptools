@@ -12,9 +12,16 @@
 # instance of label cover.
 #
 from itertools import product
-from structure import *
-from reductions import InstanceMonad
+from .structure import product_relation, Structure
+from .reductions import DelayDecode, csp_solver
 import string
+
+
+try:
+    assert(default_solver is not None)
+except (NameError, AssertionError):
+    from pycosat import itersolve
+    default_solver = csp_solver(itersolve)
 
 
 class Components:
@@ -68,17 +75,15 @@ def cover(domain, edges):
         for u in neighbours[v]:
             build_stack(u)
         stack.append(v)
-        return
 
     for v in domain:
         build_stack(v)
 
     def remove_reachable(v):
-        for u in neighbours[v]: 
+        for u in neighbours[v]:
             if u in stack:
                 stack.remove(u)
                 remove_reachable(u)
-        return
 
     while True:
         try:
@@ -129,13 +134,13 @@ def indicator_structure(Template, LC_instance):
                 for x in product(Template.domain, repeat=arity)}
         return polymorphisms
 
-    return InstanceMonad(Structure(variables, *rels), decode)
+    return DelayDecode(Structure(variables, *rels), decode)
 
 
-def test_identities(A, B, identities, solver):
-    def Bsolver(instance):
+def test_identities(A, B, identities, solver=default_solver):
+    def cspB_solver(instance):
         yield from solver(instance, B)
-    yield from indicator_structure(A, identities).solve(Bsolver)
+    yield from indicator_structure(A, identities).solve(cspB_solver)
 
 
 def parse_identities(*args):

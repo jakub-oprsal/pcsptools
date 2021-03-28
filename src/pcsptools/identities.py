@@ -11,8 +11,8 @@
 # CSP) and `parse_identities` which converts simply written identities into an
 # instance of label cover.
 #
-from itertools import product
-from .structure import product_relation, Structure
+from itertools import product, count
+from .structure import product_relation, transpose, Structure
 from .reductions import DelayDecode, csp_solver
 import string
 
@@ -207,5 +207,29 @@ def parse_identities(*args):
             constraints.append((
                 (f, f'i{id_no}'),
                 tuple((i, x_to_i[x]) for i, x in enumerate(fargs))))
+
+    return tuple(fs.items()), tuple(constraints)
+
+
+def loop_condition(structure, names=None):
+    """ generates the loop condition corresponding to the given struture """
+    minor_name = 'i0'
+    if names is None:
+        names = map(lambda i: f's_{i}', count(0))
+
+    fs = dict()
+    fs[minor_name] = len(structure.domain) # the common minor
+
+    inverse = {a: i for i, a in enumerate(structure.domain)}
+    def projections(relation):
+        return transpose(
+            tuple((i, inverse[a]) for a in edge)
+            for i, edge in enumerate(relation))
+
+    constraints = []
+    for name, relation in zip(names, structure.relations):
+        fs[name] = len(relation)
+        for pi in projections(relation):
+            constraints.append(((name, minor_name), pi))
 
     return tuple(fs.items()), tuple(constraints)

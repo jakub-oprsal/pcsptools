@@ -83,7 +83,7 @@ def clique(k):
 
 
 def cycle(n):
-    """ The n-cycle graph. """
+    """ The unoriented n-cycle graph. """
     if n==1:
         return loop(2)
     if n==2:
@@ -93,6 +93,15 @@ def cycle(n):
             yield (a, (a-1) % n)
             yield (a, (a+1) % n)
     return Structure(range(n), edges())
+
+
+def ocycle(n):
+    """ The oriented n-cycle graph. """
+    if n==1:
+        return loop(2)
+    return Structure(
+            range(n),
+            ((i, (i+1) % n) for i in range(n)))
 
 
 def nae(n, arity=3):

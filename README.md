@@ -43,10 +43,11 @@ except StopIteration:
 
 ## Structures (and CSP instances)
 
-Relational structures are stored as instances of the class `Structure`. Constructed by `Structure(domain, relation1, relation2, ...)`. Each of the relations is an iterator (list, set, tuple) of tuples of elements from domain. A few structures are pre-defined:
+Relational structures are stored as instances of the class `Structure`. Constructed by `Structure(domain, relation1, relation2, ...)`. Each of the relations is an iterator (list, set, tuple, etc.) of tuples of elements from domain. A few structures are pre-defined:
 
 - `clique(n)` – the complete graph on `n` vertices.
-- `cycle(n)` – the `n`-cycle graph.
+- `cycle(n)` – the unoriented `n`-cycle graph.
+- `ocycle(n)` – the oriented `n`-cycle graph.
 - `nae(n, arity=3)` – the 'not all equal' relation on an `n` element set, i.e., the template for hypergraph `n` colouring.
 - `onein(n)` – the generalisation of 1-in-3SAT of arity `n`, containing those Boolean tuples with exactly one 1.
 - `loop(n, m, ...)` – the 'loop' of the given type, i.e., the structure on 1-element domain where all relations are non-empty.
@@ -56,15 +57,26 @@ Relational structures are stored as instances of the class `Structure`. Construc
 A CSP instance is a pair of structures of the same relational type.
 
 
+## Identities
+
+There are a few easy ways to construct minor conditions:
+
+- `parse_identities(*identies)` – parses identities written in natural language, e.g., in form of strings as `'m(x, x, y) = m(y, x, x) = m(y, y, y)'`. The commas and spaces are optional. Variable symbols can also be numbers, function symbols can only be letters.
+- `loop_condition(structure, names=(s_0, s_1, ...))` – this constructs the loop condition corresponding to the given structure. The optional argument `names` holds the names of the function symbols assigned to relations of the structure.
+- using the `csp_to_lc` function. You will need to distill it from the output since the output is in a monad that takes care of decoding.
+
+Natively, identities are represented as a label cover instance which is a pair `(variables, constraints)` where each of the variables is a pair `(name, domain_size)`, and each constraint is a pair `((u, v), pi)` where `u` and `v` are variable names, and `pi` is the relation defining the constraint —we assume that `pi` is a graph of function, if it's not you may encounter undocumented behaviour.
+
+
 ## Reductions
 
 We provide reductions between CSP, label cover, and SAT. The goal is to allow encoding of a CSP instance into a SAT instance, so that we can use  external SAT-solvers to solve CSP instances.
 
 A reduction is a function that:
  - inputs (`in_instance`)
- - returns (`out_instance`, `decode`)
+ - returns an element of a monad that is constructed using `out_instance` and a `decode` function.
 
-where `decode` a function that decodes a solution to `out_instance` to a solution of `in_instance` (this gives that the reduction is sound), and of course, if `out_instance` is not solvable, then `in_instance` is not solvable either (the reduction is complete).
+This monad is an object with two methods: `bind(reduction)` that is used to compose reduction, and `solve(solver)` that executes the decoding. I don't think this is a good place to explain monads, look into the code to find details (or read a book on programming in Haskell from where I am borrowing these tricks).
 
 The reductions are:
 

@@ -1,5 +1,5 @@
 __pycache__
 build/
 dist/
-src/pcsptools.egg-info/
+pcsptools.egg-info/
 .*

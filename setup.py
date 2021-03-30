@@ -8,9 +8,7 @@ setup(
         identitites.',
     author='Jakub Opršal',
     author_email='oprsal.jakub@gmail.com',
-    packages=["pcsptools"],
-    install_requires=[
-        "pycosat",
-        ],
-    package_dir={'': 'src'}
-    )
+    license='MIT',
+    packages=['pcsptools'],
+    install_requires=['pycosat']
+)

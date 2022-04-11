@@ -1,16 +1,16 @@
-##
-# IDENTITIES
-#
-# Tools to check height 1 identities in polymorphism minions
-#
-# The key construction ere is the *indicator structure* which creates the
-# instance of CSP whose solutions correspond to the solutions of the given
-# identities.
-#
-# In addition, we have two helper tools: `Components` (which solves equality
-# CSP) and `parse_identities` which converts simply written identities into an
-# instance of label cover.
-#
+'''
+IDENTITIES
+
+Tools to check height 1 identities in polymorphism minions.
+
+The key construction ere is the *indicator structure* which creates the
+instance of CSP whose solutions correspond to the solutions of the given
+identities.
+
+In addition, we have two helper tools: `Components` (which solves equality
+CSP) and `parse_identities` which converts simply written identities into an
+instance of label cover.
+'''
 from itertools import product, count
 from .structure import product_relation, transpose, Structure
 from .reductions import DelayDecode, csp_solver

@@ -1,23 +1,23 @@
-##
-# REDUCTIONS
-#
-# Tools to provide reductions between CSP, label cover, and SAT.  One of the
-# goals is to allow encoding of a CSP instance into a SAT instance, so that we
-# can use external SAT-solvers to solve CSP instances. But these reducitons can
-# be used for things like: checking whether a minor condition is satisfied by
-# polymorphisms, whether it is trivial, constructing reductions between CSPs,
-# etc.
-#
-# For us a reduction is a function that inputs an instance of one problem, and
-# ouputs an instance of another problem and a way to decode a solution to the
-# second instance into a solution of the first instance. The output is encoded
-# in a monad which is an abstraction that will allow us easily compose
-# reductions by using `bind`.
-#
-# We also provide a helper function `csp_solver(sat_solver)` which produces a
-# csp_solver from a sat_solver.
-#
-from itertools import combinations
+'''
+REDUCTIONS
+
+Tools to provide reductions between CSP, label cover, and SAT.  One of the
+goals is to allow encoding of a CSP instance into a SAT instance, so that we
+can use external SAT-solvers to solve CSP instances. But these reducitons can
+be used for things like: checking whether a minor condition is satisfied by
+polymorphisms, whether it is trivial, constructing reductions between CSPs,
+etc.
+
+For us a reduction is a function that inputs an instance of one problem, and
+ouputs an instance of another problem and a way to decode a solution to the
+second instance into a solution of the first instance. The output is encoded
+in a monad which is an abstraction that will allow us easily compose
+reductions by using `bind`.
+
+We also provide a helper function `csp_solver(sat_solver)` which produces a
+csp_solver from a sat_solver.
+'''
+from itertools import combinations, count
 from .structure import transpose
 
 
@@ -52,8 +52,8 @@ def csp_to_lc(in_instance):
 
     csp_variables = tuple((v, dom_size) for v in Input.domain)
     csp_constraints = tuple(
-        (c, size)
-        for rel, size in zip(Input.relations, rel_sizes)
+        ((c, symb), size)
+        for symb, rel, size in zip(count(), Input.relations, rel_sizes)
         for c in rel)
     variables = csp_variables + csp_constraints
 
@@ -63,11 +63,12 @@ def csp_to_lc(in_instance):
             for i, edge in enumerate(relation))
 
     def constraints():
-        for in_rel, rel in zip(Input.relations, Template.relations):
+        for symb, in_rel, rel in zip(
+                count(), Input.relations, Template.relations):
             projs = projections(rel)
             for vs in in_rel:
                 for v, pi in zip(vs, projs):
-                    yield ((vs, v), pi)
+                    yield (((vs, symb), v), pi)
 
     def decode(solution):
         return {v: Template.domain[solution[v]] for v, dom in csp_variables}
@@ -89,7 +90,7 @@ def lc_to_sat(in_instance):
         for a, b in combinations(scope, 2):
             yield (-a, -b)
 
-    def dnfs():
+    def cnfs():
         for v, d in lc_vars:
             yield from exactly_one((v, a) for a in range(d))
         for pair, pi in lc_constraints:
@@ -100,7 +101,7 @@ def lc_to_sat(in_instance):
     def decode(solution):
         return dict(variables[x] for x in solution if x > 0)
 
-    return DelayDecode(dnfs(), decode)
+    return DelayDecode(cnfs(), decode)
 
 
 def csp_solver(sat_solver):

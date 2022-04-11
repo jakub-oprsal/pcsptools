@@ -1,3 +1,8 @@
+'''
+STRUCTURE
+
+The `Structure` class and severel predefined structures.
+'''
 from itertools import product, starmap, chain
 from functools import cached_property
 

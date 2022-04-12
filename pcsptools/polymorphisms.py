@@ -2,7 +2,7 @@
 POLYMORPHISMS AND IDENTITIES
 
 Tools for finding polymorphisms, and for checking height 1 identities in
-polymorphism minions. 
+polymorphism minions.
 '''
 import string
 from itertools import product, count
@@ -95,8 +95,8 @@ def indicator_structure(Template, LC_instance):
     # Construct the domain of the indicator by factoring
     arities = dict(in_vars)
     domain = ((f, x)
-        for f, arity in arities.items()
-        for x in product(Template.domain, repeat=arity))
+              for f, arity in arities.items()
+              for x in product(Template.domain, repeat=arity))
     identify = Components(domain)
     for scope, relation in in_cons:
         f, g = scope
@@ -207,11 +207,10 @@ def loop_condition(structure, names=None, vertex_name='i0'):
     """ generates the loop condition corresponding to the given struture """
     if names is None:
         names = map(lambda i: f's{i}', count(0))
-
     fs = dict()
-    fs[vertex_name] = len(structure.domain) # the common minor
-
+    fs[vertex_name] = len(structure.domain)
     inverse = {a: i for i, a in enumerate(structure.domain)}
+
     def projections(relation):
         return transpose(
             tuple((i, inverse[a]) for a in edge)

@@ -3,7 +3,7 @@ STRUCTURE
 
 The `Structure` class and severel predefined structures.
 '''
-from itertools import product, starmap, chain
+from itertools import product, starmap, chain, combinations
 from functools import cached_property
 
 
@@ -16,7 +16,7 @@ def arity_of(relation):
     try:
         arity = len(next(rel))
     except StopIteration:
-        return None #Empty Relation
+        return None     # Empty Relation
 
     if not all(arity == len(edge) for edge in rel):
         raise ValueError('Ambiguous arity!')
@@ -37,7 +37,7 @@ class Structure:
         return tuple(map(arity_of, self.relations))
 
     def check(self):
-        type_ = type(self)  # Checks that arities are well-defined
+        _ = self.type  # Checks that arities are well-defined
         for relation in self.relations:
             if not domain_of(relation).issubset(self.domain):
                 raise ValueError('Relation defined on a bigger domain.')
@@ -89,20 +89,22 @@ def clique(k):
 
 def cycle(n):
     """ The unoriented n-cycle graph. """
-    if n==1:
+    if n == 1:
         return loop(2)
-    if n==2:
+    if n == 2:
         return clique(2)
+
     def edges():
         for a in chain(range(0, n, 2), range(1, n, 2)):
             yield (a, (a-1) % n)
             yield (a, (a+1) % n)
+
     return Structure(range(n), edges())
 
 
 def ocycle(n):
     """ The oriented n-cycle graph. """
-    if n==1:
+    if n == 1:
         return loop(2)
     return Structure(
             range(n),
@@ -125,12 +127,12 @@ def onein(n):
         (tuple((1 if i == k else 0) for i in range(n)) for k in range(n)))
 
 
-def tinn(t,n):
+def tinn(t, n):
     """ The generalisation of t-in-n-SAT. """
     return Structure(
         (0, 1),
         (tuple((1 if i in xs else 0)
-            for i in range(n)) for xs in combinations(range(n), t)))
+               for i in range(n)) for xs in combinations(range(n), t)))
 
 
 def loop(*reltype, name=0):
@@ -151,7 +153,7 @@ def affine(p, arity=3):
 
 def hornsat():
     relations = (
-        (xs for xs in product((0, 1), repeat = 3) if xs != (0, 0, 1)),
-        (xs for xs in product((0, 1), repeat = 3) if xs != (0, 0, 0)),
+        (xs for xs in product((0, 1), repeat=3) if xs != (0, 0, 1)),
+        (xs for xs in product((0, 1), repeat=3) if xs != (0, 0, 0)),
         ((0,),), ((1,),))
     return Structure((0, 1), *relations)

@@ -37,7 +37,7 @@ could be also written as
 ```python
 oneinthree = Structure(
         range(2),
-        (tuple((1 if i == k else 0) for i in range(n)) for k in range(n))
+        (tuple((1 if i == k else 0) for i in range(3)) for k in range(3))
         )
 ```
 There are a bunch of predefined structures; see below, or the file `structure.py`.

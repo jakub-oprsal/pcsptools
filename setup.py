@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 from setuptools import setup
 
+
 setup(
     name='pcsptools',
-    version='0.0.4',
-    description='Test whether polymorphisms satisfy some minor\
-        identitites.',
+    version='0.0.5-alpha',
+    description='Tools for checking identities in polymorphism minions.',
     author='Jakub Opršal',
     author_email='oprsal.jakub@gmail.com',
     license='MIT',

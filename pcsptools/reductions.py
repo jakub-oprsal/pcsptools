@@ -102,9 +102,3 @@ def lc_to_sat(in_instance):
         return dict(variables[x] for x in solution if x > 0)
 
     return DelayDecode(cnfs(), decode)
-
-
-def csp_solver(sat_solver):
-    def solver(*csp_instance):
-        yield from csp_to_lc(csp_instance).bind(lc_to_sat).solve(sat_solver)
-    return solver

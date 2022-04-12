@@ -125,6 +125,14 @@ def onein(n):
         (tuple((1 if i == k else 0) for i in range(n)) for k in range(n)))
 
 
+def tinn(t,n):
+    """ The generalisation of t-in-n-SAT. """
+    return Structure(
+        (0, 1),
+        (tuple((1 if i in xs else 0)
+            for i in range(n)) for xs in combinations(range(n), t)))
+
+
 def loop(*reltype, name=0):
     """ The one-element loop structure with the given type
         (all relations are non-empty). Type has to be fully defined. """
@@ -132,12 +140,14 @@ def loop(*reltype, name=0):
         (name,),
         *((tuple(name for i in range(arity)),) for arity in reltype))
 
+
 def affine(p, arity=3):
     """ Affine equations over Z_p. """
     relations = tuple([] for i in range(p))
     for xs in product(range(p), repeat=arity):
         relations[sum(xs) % p].append(xs)
     return Structure(range(p), *relations)
+
 
 def hornsat():
     relations = (

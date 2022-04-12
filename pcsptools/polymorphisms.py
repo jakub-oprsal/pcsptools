@@ -1,27 +1,19 @@
 '''
-IDENTITIES
+POLYMORPHISMS AND IDENTITIES
 
-Tools to check height 1 identities in polymorphism minions.
-
-The key construction ere is the *indicator structure* which creates the
-instance of CSP whose solutions correspond to the solutions of the given
-identities.
-
-In addition, we have two helper tools: `Components` (which solves equality
-CSP) and `parse_identities` which converts simply written identities into an
-instance of label cover.
+Tools for finding polymorphisms, and for checking height 1 identities in
+polymorphism minions. 
 '''
+import string
 from itertools import product, count
 from .structure import product_relation, transpose, Structure
-from .reductions import DelayDecode, csp_solver
-import string
+from .reductions import DelayDecode
+from .solver import pyco_solver as default_solver
 
 
-try:
-    assert(default_solver is not None)
-except (NameError, AssertionError):
-    from pycosat import itersolve
-    default_solver = csp_solver(itersolve)
+def polymorphisms(A, B, arity, solver=default_solver):
+    Apower = A.power(arity)
+    yield from solver(Apower, B)
 
 
 class Components:
@@ -147,7 +139,7 @@ def parse_identities(*args):
     """ parses identities from strings to an LC instance:
         each arg contains a bunch of linked identities, e.g.
         'm(x, x, y) = m(x, y, x) = m(y, x, x)', or
-        '   s(123,123)=s(231,321) """
+        '   s(123,123)=s(231,321) '"""
     fs, constraints = dict(), list()
 
     for id_no, line in enumerate(args):
@@ -211,14 +203,13 @@ def parse_identities(*args):
     return tuple(fs.items()), tuple(constraints)
 
 
-def loop_condition(structure, names=None):
+def loop_condition(structure, names=None, vertex_name='i0'):
     """ generates the loop condition corresponding to the given struture """
-    minor_name = 'i0'
     if names is None:
-        names = map(lambda i: f's_{i}', count(0))
+        names = map(lambda i: f's{i}', count(0))
 
     fs = dict()
-    fs[minor_name] = len(structure.domain) # the common minor
+    fs[vertex_name] = len(structure.domain) # the common minor
 
     inverse = {a: i for i, a in enumerate(structure.domain)}
     def projections(relation):
@@ -230,6 +221,6 @@ def loop_condition(structure, names=None):
     for name, relation in zip(names, structure.relations):
         fs[name] = len(relation)
         for pi in projections(relation):
-            constraints.append(((name, minor_name), pi))
+            constraints.append(((name, vertex_name), pi))
 
     return tuple(fs.items()), tuple(constraints)

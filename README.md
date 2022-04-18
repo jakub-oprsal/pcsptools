@@ -149,9 +149,23 @@ negative sign encodes nagation of a variable, i.e., `(-1, 2, 4)` is the clause
 solutions (preferably all of them).
 
 
+## Contributing and feedback
+
+If you find this package useful, I would be delighted to learn about it! There
+are probably as many implementations of some kind of identity/polymoprhism
+tester as they are coding-able scientists in the CSP community. Nevertheless, I
+think we might benefit in joining our efforts, and there is a lot that can be
+improved in this package! Feel free to raise an issue, or create a pull request
+if you have coded any extension of these tools. Also, if you have energy and do
+not know where to start, please get in touch here or by email! 
+
+
 ## Thanks
 
-Thanks to Michal Rolínek for forcing me to package this thing!
+Thanks to Michal Rolínek for forcing me to package this thing!  I would also
+like to link Antoine Mottet's [csptools] which is a package with very similar
+purpose (though slightly more titlted towards CSPs) that I used as inspiration
+for this one.
 
 
 ## References
@@ -163,3 +177,4 @@ on the Theory of Computing (STOC 2019)*,
 
 [BKO19]: https://doi.org/10.1109/FOCS.2019.00076
 [pycosat]: https://github.com/conda/pycosat
+[csptools]: https://github.com/amottet/csptools

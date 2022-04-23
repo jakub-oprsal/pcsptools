@@ -51,9 +51,9 @@ optional argument gives an alternative CSP solver (e.g., if you want to find
 all polymoprhisms to `B` with a tractable CSP, you might want to implement your
 own solver for that).
 
-Finally, for testing identities, we provide function `test_identities` with header
+Finally, for testing identities, we provide function `check_identities` with header
 ```python
-test_identities(A, B, identities, solver=pyco_solver)
+check_identities(A, B, identities, solver=pyco_solver)
 ```
 The arguments are hopefully self-explanatory. Identities are given as a label
 cover instance, i.e., a list of variables given as pairs `(name, domain)` and a
@@ -74,7 +74,7 @@ produce such an instance, we provide a~few functions:
 A working example would look like this:
 
 ```python
-solutions = test_identities(
+solutions = check_identities(
         affine(2), affine(2),
         parse_identities(
             "u(xxy) = u(xyx) = u(yxx) = d(xy)",

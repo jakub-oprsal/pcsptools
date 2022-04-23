@@ -7,7 +7,7 @@ CSP solver from a SAT solver.
 from .structure import *
 from .polymorphisms import (
         polymorphisms,
-        test_identities,
+        check_identities,
         parse_identities,
         loop_condition,
         )

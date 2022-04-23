@@ -129,7 +129,7 @@ def indicator_structure(Template, LC_instance):
     return DelayDecode(Structure(variables, *rels), decode)
 
 
-def test_identities(A, B, identities, solver=default_solver):
+def check_identities(A, B, identities, solver=default_solver):
     def cspB_solver(instance):
         yield from solver(instance, B)
     yield from indicator_structure(A, identities).solve(cspB_solver)

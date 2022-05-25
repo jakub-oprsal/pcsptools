@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='pcsptools',
-    version='0.0.5-alpha-2',
+    version='0.0.5-alpha-3',
     description='Tools for checking identities in polymorphism minions.',
     author='Jakub Opršal',
     author_email='oprsal.jakub@gmail.com',

@@ -8,12 +8,11 @@ import string
 from itertools import product, count
 from .structure import product_relation, transpose, Structure
 from .reductions import DelayDecode
-from .solver import pyco_solver as default_solver
+from .solver import pyco_solver
 
 
-def polymorphisms(A, B, arity, solver=default_solver):
-    Apower = A.power(arity)
-    yield from solver(Apower, B)
+def polymorphisms(structureA, structureB, arity, solver=pyco_solver):
+    yield from solver(structureA.power(arity), structureB)
 
 
 class Components:
@@ -129,10 +128,10 @@ def indicator_structure(Template, LC_instance):
     return DelayDecode(Structure(variables, *rels), decode)
 
 
-def check_identities(A, B, identities, solver=default_solver):
+def check_identities(structureA, structureB, identities, solver=pyco_solver):
     def cspB_solver(instance):
-        yield from solver(instance, B)
-    yield from indicator_structure(A, identities).solve(cspB_solver)
+        yield from solver(instance, structureB)
+    yield from indicator_structure(structureA, identities).solve(cspB_solver)
 
 
 def parse_identities(*args):
@@ -152,7 +151,7 @@ def parse_identities(*args):
                 if char == '=':
                     state = 1
                 else:
-                    raise SyntaxError(
+                    raise ValueError(
                         f"Unexpected character '{char}' at {id_no}:{i}.")
             elif state == 1:
                 if char in " ":
@@ -161,7 +160,7 @@ def parse_identities(*args):
                     f = char
                     state = 2
                 else:
-                    raise SyntaxError(
+                    raise ValueError(
                         f"Unexpected character '{char}' at {id_no}:{i}.")
             elif state == 2:
                 if char == ' ':
@@ -176,10 +175,10 @@ def parse_identities(*args):
                     xs.add(char)
                 elif char == ")":
                     if len(fargs) == 0:
-                        raise SyntaxError(
+                        raise ValueError(
                             f"Unexpected character '{char}' at {id_no}:{i}.")
                     if f in fs and fs[f] != len(fargs):
-                        raise SyntaxError(
+                        raise ValueError(
                             f"'{f}' has ambiguous arity.")
                     else:
                         fs[f] = len(fargs)
@@ -187,10 +186,18 @@ def parse_identities(*args):
                     fargs = ""
                     state = 0
                 else:
-                    raise SyntaxError(
+                    raise ValueError(
                         f"Unexpected character '{char}' at {id_no}:{i}.")
-        if state != 0 or len(terms) == 1:
-            raise SyntaxError('Unexpected end of input.')
+        if state == 1:
+            raise ValueError("Trailing '='?")
+        elif state == 2:
+            raise ValueError("Expected '(', but the string ended.")
+        elif state == 3:
+            raise ValueError("Expected ')', but the string ended.")
+        elif len(terms) == 1:
+            raise ValueError("One term does not form an equation!")
+        elif state != 0:
+            raise ValueError("Unexpected state at the end of string.")
 
         fs[f'i{id_no}'] = len(xs)
         x_to_i = {x: i for i, x in enumerate(xs)}

@@ -11,3 +11,4 @@ from .polymorphisms import (
         parse_identities,
         loop_condition,
         )
+from .solver import pyco_solver

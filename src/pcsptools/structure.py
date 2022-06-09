@@ -57,12 +57,17 @@ class Structure:
     def product(self, other):
         return product_structure(self, other)
 
+    def expand(self, *relations):
+        """ Returns an expanded structure. """
+        return Structure(
+            self.domain,
+            *self.relations,
+            *relations)
+
     def singleton_expansion(self):
         """ Adds singletons so that the resulting structure has a single
             automorphism. """
-        return Structure(
-            self.domain,
-            *self.relations, *(((a,),) for a in self.domain))
+        return self.expand(*(((a,),) for a in self.domain))
 
 
 def product_relation(*args, **cwargs):

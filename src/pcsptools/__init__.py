@@ -10,5 +10,6 @@ from .polymorphisms import (
         check_identities,
         parse_identities,
         loop_condition,
+        sigma,
         )
 from .solver import pyco_solver

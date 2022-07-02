@@ -40,6 +40,15 @@ class DelayDecode():
         yield from map(self.decode, solver(self.instance))
 
 
+class LabelCover():
+    """ An instance of label cover, or a minor condition. Just a named tuple
+        essentially. """
+
+    def __init__(self, variables, constraints):
+        self.vars = tuple(variables)
+        self.constraints = tuple(constraints)
+
+
 def csp_to_lc(in_instance):
     """ converts a CSP instance fiven as (Input, Template) to an LC instance
         returns: LC instance (variables, constraints), and a decode function.
@@ -73,15 +82,14 @@ def csp_to_lc(in_instance):
     def decode(solution):
         return {v: Template.domain[solution[v]] for v, dom in csp_variables}
 
-    return DelayDecode((variables, constraints()), decode)
+    return DelayDecode(LabelCover(variables, constraints()), decode)
 
 
-def lc_to_sat(in_instance):
+def lc_to_sat(lc):
     """ converts a LC instance to a list of SAT clauses
         returns an iterator over clauses and a decode function """
-    lc_vars, lc_constraints = in_instance
 
-    variables = (False,) + tuple((v, a) for v, d in lc_vars for a in range(d))
+    variables = (False,) + tuple((v, a) for v, d in lc.vars for a in range(d))
     table = {va: i for i, va in enumerate(variables) if i > 0}
 
     def exactly_one(pairs):
@@ -91,9 +99,9 @@ def lc_to_sat(in_instance):
             yield (-a, -b)
 
     def cnfs():
-        for v, d in lc_vars:
+        for v, d in lc.vars:
             yield from exactly_one((v, a) for a in range(d))
-        for pair, pi in lc_constraints:
+        for pair, pi in lc.constraints:
             vs, v = pair
             for x, pix in pi:
                 yield (-table[(vs, x)], table[(v, pix)])

@@ -67,9 +67,10 @@ produce such an instance, we provide a~few functions:
 - `loop_condition(structure, names = ('s0', ...), vertex_name = 'i0')` that
   creates a loop condition from a structure, e.g., the 6-ary Siggers identity
   can be given as `loop_condition(clique(3), names = ('s'))`.
-- Technically, you could also use the `csp_to_lc` function from `pcsptools.reductions`
-  module. You will need to distill it from the output since the output is in a
-  monad that takes care of decoding. You are on your own here, for now.
+- `sigma(A, B)` that constructs a minor condition denoted by
+  $\Sigma(\rel A, \rel B)$ in \[[BKO19], Section 3\], i.e., `sigma(A, loop)` is
+  the loop condition, and `sigma(A, B)` is trivial iff `A` maps homomorphically
+  to `B`.
 
 A working example would look like this:
 

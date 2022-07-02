@@ -46,6 +46,17 @@ def test_loop_condition_true():
         affine(2), affine(2),
         loop_condition(clique(3))))
 
+def test_sigma_false():
+    with pytest.raises(StopIteration):
+        _ = next(check_identities(
+            onein(3), onein(3),
+            sigma(cycle(3), cycle(5))))
+
+def test_sigma_true():
+    assert next(check_identities(
+        onein(3), onein(3),
+        sigma(cycle(5), clique(3))))
+
 def test_count():
     # K_3 has 12 binary polymorphisms (6 dictators for each coordinate)
     solutions = check_identities(clique(3), clique(3),

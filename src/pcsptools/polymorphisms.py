@@ -7,7 +7,7 @@ polymorphism minions.
 import string
 from itertools import product, count
 from .structure import product_relation, transpose, Structure
-from .reductions import DelayDecode
+from .reductions import DelayDecode, LabelCover, csp_to_lc
 from .solver import pyco_solver
 
 
@@ -85,19 +85,18 @@ def cover(domain, edges):
             return
 
 
-def indicator_structure(Template, LC_instance):
+def indicator_structure(Template, Sigma):
     """ given a Template A and a LC instance Sigma
         builds the indicator structure of Sigma over A
         and passes the identification object """
-    in_vars, in_cons = LC_instance
 
     # Construct the domain of the indicator by factoring
-    arities = dict(in_vars)
+    arities = dict(Sigma.vars)
     domain = ((f, x)
               for f, arity in arities.items()
               for x in product(Template.domain, repeat=arity))
     identify = Components(domain)
-    for scope, relation in in_cons:
+    for scope, relation in Sigma.constraints:
         f, g = scope
         pi = {x: y for x, y in relation}
         for x in product(Template.domain, repeat=arities[g]):
@@ -107,7 +106,9 @@ def indicator_structure(Template, LC_instance):
     variables = iter(identify)
 
     # impose constraints that cover all thats necessary
-    important_fs = tuple(cover(arities, (scope for scope, rel in in_cons)))
+    important_fs = tuple(cover(
+        arities,
+        (scope for scope, rel in Sigma.constraints)))
 
     def indicator_relation(template_relation):
         return set(
@@ -207,7 +208,7 @@ def parse_identities(*args):
                 (f, f'i{id_no}'),
                 tuple((i, x_to_i[x]) for i, x in enumerate(fargs))))
 
-    return tuple(fs.items()), tuple(constraints)
+    return LabelCover(fs.items(), constraints)
 
 
 def loop_condition(structure, names=None, vertex_name='i0'):
@@ -229,4 +230,8 @@ def loop_condition(structure, names=None, vertex_name='i0'):
         for pi in projections(relation):
             constraints.append(((name, vertex_name), pi))
 
-    return tuple(fs.items()), tuple(constraints)
+    return LabelCover(fs.items(), constraints)
+
+def sigma(A, B):
+    """ generates the condition Sigma as in [BKO21, Section 3] """
+    return csp_to_lc((A, B)).instance

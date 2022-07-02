@@ -69,6 +69,12 @@ class Structure:
             automorphism. """
         return self.expand(*(((a,),) for a in self.domain))
 
+    def __pow__(self, exponent):
+        return self.power(exponent)
+
+    def __mul__(self, other):
+        return self.product(other)
+
 
 def product_relation(*args, **cwargs):
     yield from map(transpose, product(*args, **cwargs))

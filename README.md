@@ -68,7 +68,7 @@ produce such an instance, we provide a~few functions:
   creates a loop condition from a structure, e.g., the 6-ary Siggers identity
   can be given as `loop_condition(clique(3), names = ('s'))`.
 - `sigma(A, B)` that constructs a minor condition denoted by
-  $\Sigma(\rel A, \rel B)$ in \[[BKO19], Section 3\], i.e., `sigma(A, loop)` is
+  $\Sigma(\mathbb A, \mathbb B)$ in \[[BKO19], Section 3\], i.e., `sigma(A, loop)` is
   the loop condition, and `sigma(A, B)` is trivial iff `A` maps homomorphically
   to `B`.
 
@@ -109,9 +109,9 @@ predefined structures are:
 - `loop(n, m, ..., name=0)` – the 'loop' of the given type, i.e., the structure
   on 1-element domain where all relations are non-empty. The optional argument
   gives a name to the the unique element of the structure.
-- `affine(p, arity=3)` – the affine equations over **Z**\_p with one relation
-  for each *i* = 0, ..., *p* − 1 defined as *R\_i* = {(*x*, *y*, *z*) : *x* +
-  *y* + *z* = *i* mod *p*}.
+- `affine(p, arity=3)` – the affine equations over $\mathbb Z_p$ where
+  $p ={}$`p` with one relation for each $i = 0, \dots, p − 1$ defined asr
+  $R_i = \\{(x, y, z) : x + y + z = i \bmod p\\}$.
 - `hornsat()` - the template of Horn-SAT with two ternary and two singleton
   unary relations. Note it is a function that construct a copy of the
   structure.

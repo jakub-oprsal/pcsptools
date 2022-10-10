@@ -12,17 +12,18 @@ from .solver import pyco_solver
 
 
 def polymorphisms(structureA, structureB, arity, solver=pyco_solver):
+    """ Iterator through all polymorphisms of the given arity. """
     yield from solver(structureA.power(arity), structureB)
 
 
 class Components:
-    """ a data structure holding connected components of a graph """
+    """ Data structure holding connected components of a graph. """
 
     def __init__(self, domain):
         self.tree = {a: a for a in domain}
 
     def __call__(self, a):
-        """ returns the current representative from the same class as `a` """
+        """ Returns the current representative from the same class as `a`. """
         cur, same_as = a, ()
         while self.tree[cur] != cur:
             cur, same_as = self.tree[cur], same_as + (cur,)
@@ -129,10 +130,18 @@ def indicator_structure(Template, Sigma):
     return DelayDecode(Structure(variables, *rels), decode)
 
 
-def check_identities(structureA, structureB, identities, solver=pyco_solver):
+def solve_minor_condition(structureA, structureB, identities, solver=pyco_solver):
     def cspB_solver(instance):
         yield from solver(instance, structureB)
     yield from indicator_structure(structureA, identities).solve(cspB_solver)
+
+
+def check_minor_condition(*args, **kwargs):
+    try:
+        solution = next(solve_minor_condition(*args, **kwargs))
+        return solution
+    except StopIteration:
+        return None
 
 
 def parse_identities(*args):

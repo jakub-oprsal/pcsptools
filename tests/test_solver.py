@@ -1,6 +1,7 @@
 import pytest
 from pcsptools import *
 from pcsptools.solver import pyco_solver as solver
+from pcsptools.structure import domain_of, product_structure
 from math import factorial
 
 

@@ -75,19 +75,29 @@ produce such an instance, we provide a~few functions:
 A working example would look like this:
 
 ```python
-solutions = check_identities(
+solution = check_minor_condition(
         affine(2), affine(2),
         parse_identities(
-            "u(xxy) = u(xyx) = u(yxx) = d(xy)",
-            "v(xxxy) = v(xxyx) = v(xyxx) = v(yxxx) = d(xy)"))
+            "u(xxy) = u(xyx) = u(yxx) = "
+            "v(xxxy) = v(xxyx) = v(xyxx) = v(yxxx)"))
 
-try:
-    solution = next(solutions)
+if solution is not None:
     print(solution)
-except StopIteration:
+else:
     print('No such polymorphisms!')
 ```
 Can you guess the output?
+
+
+## Predefined minor conditions
+
+Since version 0.0.8, we have a few prededined minor conditions for immediate use instead of using `parse_identities`. Currently, they are untested, any feedback is welcome.
+
+- `wnu(n)` – *weak near-unanimity* of arity `n`, e.g., `wnu(3)` satisfies *w(x, x, y) = w(x, y, x) = w(y, x, x)*.
+- `qnu(n)` – *quasi near-unanimity* of arity `n`, satisfies the same as above and moreover the given binary minor does not depend on *y*.
+- `hageman_mitschke(n)` – ternary quasi Hageman-Mitschke terms for congruence `n`-permutatibility. In particular, `hageman_mitschke(2)` is a quasi Maltsev operation.
+- `siggers(n)` – Siggers of arity `n` (which is either 4 or 6).
+- `cyclic(p)` – cyclic operation of arity `p`.
 
 
 ## Structures

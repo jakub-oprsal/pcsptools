@@ -53,7 +53,7 @@ own solver for that).
 
 Finally, for testing identities, we provide function `check_identities` with header
 ```python
-check_identities(A, B, identities, solver=pyco_solver)
+check_minor_condition(A, B, identities, solver=pyco_solver)
 ```
 The arguments are hopefully self-explanatory. Identities are given as a label
 cover instance, i.e., a list of variables given as pairs `(name, domain)` and a

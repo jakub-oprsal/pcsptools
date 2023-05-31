@@ -156,7 +156,7 @@ The module `solver.py` provides a hook for [pycosat] solver and a helper
 function `csp_solver(sat_solver)` which produces a CSP-solver from a
 SAT-solver. Note that a clause is encoded as a list of signed integers where
 negative sign encodes nagation of a variable, i.e., `(-1, 2, 4)` is the clause
-¬*x*\_1 ∨ *x*\_2 ∨ *x*\_4. A solver is expected to be an iterator over
+$\neg x_1 \vee x_2 \vee x_4$. A solver is expected to be an iterator over
 solutions (preferably all of them).
 
 

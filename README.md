@@ -6,7 +6,7 @@ python binding for picosat CSP solver).
 
 The package provides a bunch of reductions between CSP, SAT, Label Cover, and
 satisfaction of minor Maltsev conditions which in practice, is an
-implementation of \[[BKO19], Section 3\].
+implementation of Section 3 of [\[BKO19\]].
 
 
 ## Installation
@@ -40,18 +40,20 @@ oneinthree = Structure(
         (tuple((1 if i == k else 0) for i in range(3)) for k in range(3))
         )
 ```
-There are a bunch of predefined structures; see below, or the file `structure.py`.
+There are a bunch of predefined structures; see below, or the file
+`structure.py`.
 
 To find all polymorphisms, we can use the function
 ```python
 polymorphisms(A, B, arity, solver=pyco_solver)
 ```
 Which iterates through all polymorphisms from `A` to `B` of arity `arity`. The
-optional argument gives an alternative CSP solver (e.g., if you want to find
-all polymoprhisms to `B` with a tractable CSP, you might want to implement your
-own solver for that).
+optional argument gives an alternative CSP solver (e.g., if you want to find all
+polymoprhisms to `B` with a tractable CSP, you might want to implement your own
+solver for that).
 
-Finally, for testing identities, we provide function `check_identities` with header
+Finally, for testing identities, we provide function `check_identities` with
+header
 ```python
 check_minor_condition(A, B, identities, solver=pyco_solver)
 ```
@@ -61,30 +63,26 @@ list of constraints given as pair `((name1, name2), binary_relation)`.  To
 produce such an instance, we provide a~few functions:
 - `parse_identities(*strings)` that inputs identities as string in a natural
   language, example given below. Commas and spaces separating variables are
-  optional, variable names cna be either letters, or digits, and functions
-  names have to be ascii letters, e.g., `'m(x, x, y) = m(x, y, x) = m(y, x, x)'`
-  and `'   s(123,123)=s(231,321) '`.
+  optional, variable names cna be either letters, or digits, and functions names
+  have to be ascii letters, e.g., `'m(x, x, y) = m(x, y, x) = m(y, x, x)'` and
+  `'   s(123,123)=s(231,321) '`.
 - `loop_condition(structure, names = ('s0', ...), vertex_name = 'i0')` that
   creates a loop condition from a structure, e.g., the 6-ary Siggers identity
   can be given as `loop_condition(clique(3), names = ('s'))`.
 - `sigma(A, B)` that constructs a minor condition denoted by
-  $\Sigma(\mathbb A, \mathbb B)$ in \[[BKO19], Section 3\], i.e., `sigma(A, loop)` is
-  the loop condition, and `sigma(A, B)` is trivial iff `A` maps homomorphically
-  to `B`.
+  $\Sigma(\mathbb A, \mathbb B)$ in \[[BKO19], Section 3\], i.e., `sigma(A,
+  loop)` is the loop condition, and `sigma(A, B)` is trivial iff `A` maps
+  homomorphically to `B`.
 
 A working example would look like this:
 
 ```python
-solution = check_minor_condition(
-        affine(2), affine(2),
-        parse_identities(
-            "u(xxy) = u(xyx) = u(yxx) = "
-            "v(xxxy) = v(xxyx) = v(xyxx) = v(yxxx)"))
+from pcsptools import *
 
-if solution is not None:
-    print(solution)
-else:
-    print('No such polymorphisms!')
+print(check_minor_condition(
+    affine(2), affine(2),
+    parse_identities("u(xxy) = u(xyx) = u(yxx) = "
+                     "v(xxxy) = v(xxyx) = v(xyxx) = v(yxxx)")))
 ```
 Can you guess the output?
 
@@ -93,10 +91,18 @@ Can you guess the output?
 
 Since version 0.0.8, we have a few prededined minor conditions for immediate use instead of using `parse_identities`. Currently, they are untested, any feedback is welcome.
 
-- `wnu(n)` – *weak near-unanimity* of arity `n`, e.g., `wnu(3)` satisfies *w(x, x, y) = w(x, y, x) = w(y, x, x)*.
-- `qnu(n)` – *quasi near-unanimity* of arity `n`, satisfies the same as above and moreover the given binary minor does not depend on *y*.
-- `hageman_mitschke(n)` – ternary quasi Hageman-Mitschke terms for congruence `n`-permutatibility. In particular, `hageman_mitschke(2)` is a quasi Maltsev operation.
-- `siggers(n)` – Siggers of arity `n` (which is either 4 or 6).
+- `wnu(n)` – *weak near-unanimity* of arity `n`, e.g., `wnu(3)` satisfies
+  $w(x, x, y) = w(x, y, x) = w(y, x, x)$.
+- `qnu(n)` – *quasi near-unanimity* of arity `n`, satisfies the same as above
+  and moreover the given binary minor does not depend on $y$.
+- `hageman_mitschke(n)` – ternary quasi Hageman-Mitschke terms for congruence
+  `n`-permutatibility. In particular, `hageman_mitschke(2)` is a quasi Maltsev
+  operation.
+- `siggers(n)` – Siggers of arity `n`, i.e., either
+  $s(a, r, e, a) = s(r, a, r, e)$ or
+  $s(x, x, y, y, z, z) = s(y, z, x, z, x, y)$.
+- `olsak(n=2, k=3)` – the $n^k-2$-ary Olšák identity, the default is
+   $o(x, x, y, y, y, x) = o(x, y, x, y, x, y) = o(x, x, y, y, y, x)$.
 - `cyclic(p)` – cyclic operation of arity `p`.
 
 
@@ -104,8 +110,8 @@ Since version 0.0.8, we have a few prededined minor conditions for immediate use
 
 Finally, let me give a list of some implemented structures. To repeat myself,
 you can construct more as instances of the class `Structure` as
-`Structure(domain, relation1, relation2, ...)` where each of the relations is
-an iterator (list, set, tuple, etc.) of tuples of elements from domain. The
+`Structure(domain, relation1, relation2, ...)` where each of the relations is an
+iterator (list, set, tuple, etc.) of tuples of elements from domain. The
 predefined structures are:
 
 - `clique(n)` – the complete graph on `n` vertices.
@@ -120,11 +126,10 @@ predefined structures are:
   on 1-element domain where all relations are non-empty. The optional argument
   gives a name to the the unique element of the structure.
 - `affine(p, arity=3)` – the affine equations over $\mathbb Z_p$ where
-  $p ={}$`p` with one relation for each $i = 0, \dots, p − 1$ defined asr
+  $p ={}$`p` with one relation for each $i = 0, \dots, p − 1$ defined as
   $R_i = \\{(x, y, z) : x + y + z = i \bmod p\\}$.
 - `hornsat()` - the template of Horn-SAT with two ternary and two singleton
-  unary relations. Note it is a function that construct a copy of the
-  structure.
+  unary relations. Note it is a function that construct a copy of the structure.
 
 
 ## Reductions
@@ -140,22 +145,21 @@ A reduction is a function that:
    `decode` function.
 
 This monad is an object with two methods: `bind(reduction)` that is used to
-compose reduction, and `solve(solver)` that executes the decoding. I don't
-think this is a good place to explain monads, look into the code to find
-details (or read a book on programming in Haskell from where I am borrowing
-these tricks).
+compose reduction, and `solve(solver)` that executes the decoding. I don't think
+this is a good place to explain monads, look into the code to find details (or
+read a book on programming in Haskell from where I am borrowing these tricks).
 
 The reductions are:
 
 - `csp_to_lc` – from CSP to label cover;
 - `lc_to_sat` – from label cover to SAT;
-- `indicator_structure` – from label cover to CSP. This reduction requires a
-  CSP Template as the first argument.
+- `indicator_structure` – from label cover to CSP. This reduction requires a CSP
+  Template as the first argument.
 
 The module `solver.py` provides a hook for [pycosat] solver and a helper
-function `csp_solver(sat_solver)` which produces a CSP-solver from a
-SAT-solver. Note that a clause is encoded as a list of signed integers where
-negative sign encodes nagation of a variable, i.e., `(-1, 2, 4)` is the clause
+function `csp_solver(sat_solver)` which produces a CSP-solver from a SAT-solver.
+Note that a clause is encoded as a list of signed integers where negative sign
+encodes nagation of a variable, i.e., `(-1, 2, 4)` is the clause
 $\neg x_1 \vee x_2 \vee x_4$. A solver is expected to be an iterator over
 solutions (preferably all of them).
 
@@ -173,19 +177,14 @@ not know where to start, please get in touch here or by email!
 
 ## Thanks
 
-Thanks to Michal Rolínek for forcing me to package this thing!  I would also
-like to link Antoine Mottet's [csptools] which is a package with very similar
-purpose (though slightly more titlted towards CSPs) that I used as inspiration
-for this one.
+Thanks to Michal Rolínek for forcing me to package this thing, and to Antoine
+Mottet's csptools for inspiration!
+
+## See also
+
+- Michael Wernthaler's [TheSmallestHardTrees]
 
 
-## References
-
-\[BKO19\] Jakub Bulín, Andrei Krokhin, Jakub Opršal. Algebraic approach to
-promise constraint satisfaction, In *Proceedings of the 51st Annual ACM Symp.
-on the Theory of Computing (STOC 2019)*,
-[doi:10.1145/3313276.3316300](https://doi.org/10.1109/FOCS.2019.00076).
-
-[BKO19]: https://doi.org/10.1109/FOCS.2019.00076
+[\[BKO19\]]: https://doi.org/10.1109/FOCS.2019.00076
 [pycosat]: https://github.com/conda/pycosat
-[csptools]: https://github.com/amottet/csptools
+[TheSmallestHardTrees]: https://github.com/WhatDothLife/TheSmallestHardTrees

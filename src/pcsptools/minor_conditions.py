@@ -32,6 +32,12 @@ def siggers(n):
         raise Exception('What do you mean by Siggers of arity {n}?!')
 
 
+def olsak(n = 2, k = 3):
+    """ the (n^k - 2)-ary Olšák identity, the default is:
+        *o(x, x, y, y, y, x) = o(x, y, x, y, x, y) = o(x, x, y, y, y, x)*. """
+    return loop_condition(nae(n, arity=k), names='o')
+
+
 def cyclic(p):
     """ Cyclic term of arity 'p'. """
     return loop_condition(ocycle(p), names='c')

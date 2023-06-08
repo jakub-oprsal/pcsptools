@@ -1,4 +1,4 @@
-'''
+"""
 REDUCTIONS
 
 Tools to provide reductions between CSP, label cover, and SAT.  One of the
@@ -16,33 +16,31 @@ reductions by using `bind`.
 
 We also provide a helper function `csp_solver(sat_solver)` which produces a
 csp_solver from a sat_solver.
-'''
+"""
 from itertools import combinations, count
 from .structure import transpose
 
 
-class DelayDecode():
-    """ A monad for delayed computation. We use it to delay decoding a solution
-        after reducing to another problem. """
+class DelayDecode:
+    """A monad for delayed computation. We use it to delay decoding a solution
+    after reducing to another problem."""
 
     def __init__(self, instance, decode=lambda x: x):
-        """ pure or identity, depending on arguments """
+        """pure or identity, depending on arguments"""
         self.instance = instance
         self.decode = decode
 
     def bind(self, reduction):
         out = reduction(self.instance)
-        return DelayDecode(
-            out.instance,
-            lambda x: self.decode(out.decode(x)))
+        return DelayDecode(out.instance, lambda x: self.decode(out.decode(x)))
 
     def solve(self, solver):
         yield from map(self.decode, solver(self.instance))
 
 
-class LabelCover():
-    """ An instance of label cover, or a minor condition. Just a named tuple
-        essentially. """
+class LabelCover:
+    """An instance of label cover, or a minor condition. Just a named tuple
+    essentially."""
 
     def __init__(self, variables, constraints):
         self.vars = tuple(variables)
@@ -50,9 +48,9 @@ class LabelCover():
 
 
 def csp_to_lc(in_instance):
-    """ converts a CSP instance fiven as (Input, Template) to an LC instance
-        returns: LC instance (variables, constraints), and a decode function.
-        Note that constraints are given as iterator. """
+    """converts a CSP instance fiven as (Input, Template) to an LC instance
+    returns: LC instance (variables, constraints), and a decode function.
+    Note that constraints are given as iterator."""
     Input, Template = in_instance
 
     inverse = {a: i for i, a in enumerate(Template.domain)}
@@ -63,17 +61,20 @@ def csp_to_lc(in_instance):
     csp_constraints = tuple(
         ((c, symb), size)
         for symb, rel, size in zip(count(), Input.relations, rel_sizes)
-        for c in rel)
+        for c in rel
+    )
     variables = csp_variables + csp_constraints
 
     def projections(relation):
         return transpose(
             tuple((i, inverse[a]) for a in edge)
-            for i, edge in enumerate(relation))
+            for i, edge in enumerate(relation)
+        )
 
     def constraints():
         for symb, in_rel, rel in zip(
-                count(), Input.relations, Template.relations):
+            count(), Input.relations, Template.relations
+        ):
             projs = projections(rel)
             for vs in in_rel:
                 for v, pi in zip(vs, projs):
@@ -86,8 +87,8 @@ def csp_to_lc(in_instance):
 
 
 def lc_to_sat(lc):
-    """ converts a LC instance to a list of SAT clauses
-        returns an iterator over clauses and a decode function """
+    """converts a LC instance to a list of SAT clauses
+    returns an iterator over clauses and a decode function"""
 
     variables = (False,) + tuple((v, a) for v, d in lc.vars for a in range(d))
     table = {va: i for i, va in enumerate(variables) if i > 0}

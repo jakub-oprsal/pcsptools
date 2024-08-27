@@ -89,7 +89,7 @@ Can you guess the output?
 
 ## Predefined minor conditions
 
-Since version 0.0.8, we have a few prededined minor conditions for immediate use instead of using `parse_identities`. Currently, they are untested, any feedback is welcome.
+Since version 0.0.7, we have a few prededined minor conditions for immediate use instead of using `parse_identities`. Currently, they are untested, any feedback is welcome.
 
 - `wnu(n)` – *weak near-unanimity* of arity `n`, e.g., `wnu(3)` satisfies
   $w(x, x, y) = w(x, y, x) = w(y, x, x)$.

@@ -1,6 +1,6 @@
 from .polymorphisms import loop_condition, sigma
 from .structure import Structure
-from .structures import onein, ocycle, clique
+from .structures import onein, ocycle, clique, path, nae
 
 
 def wnu(n):
